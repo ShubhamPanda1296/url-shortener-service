@@ -6,6 +6,10 @@ import com.shubhampanda.urlshortener.service.UrlService;
 
 import jakarta.validation.Valid;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +27,9 @@ public class UrlController {
         this.service = service;
     }
 
+    @Operation(summary = "Create a short URL", description = "Stores an HTTP or HTTPS URL and returns its short code.")
+    @ApiResponse(responseCode = "201", description = "Short URL created")
+    @ApiResponse(responseCode = "400", description = "Missing or invalid URL, or malformed request body", content = @Content)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CreateUrlResponse create(@Valid @RequestBody CreateUrlRequest request) {
