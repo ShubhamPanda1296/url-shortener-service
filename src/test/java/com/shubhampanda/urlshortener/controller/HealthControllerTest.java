@@ -1,4 +1,4 @@
-package com.shubhampanda.urlshortener.health;
+package com.shubhampanda.urlshortener.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

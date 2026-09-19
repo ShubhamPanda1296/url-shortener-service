@@ -1,4 +1,4 @@
-package com.shubhampanda.urlshortener.health;
+package com.shubhampanda.urlshortener.controller;
 
 import java.util.Map;
 
