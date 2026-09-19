@@ -2,6 +2,7 @@ package com.shubhampanda.urlshortener.service;
 
 import com.shubhampanda.urlshortener.dto.CreateUrlResponse;
 import com.shubhampanda.urlshortener.entity.Url;
+import com.shubhampanda.urlshortener.exception.UrlNotFoundException;
 import com.shubhampanda.urlshortener.repository.UrlRepository;
 import com.shubhampanda.urlshortener.util.ShortCodeGenerator;
 
@@ -17,6 +18,12 @@ public class UrlService {
     public UrlService(UrlRepository repository, ShortCodeGenerator codeGenerator) {
         this.repository = repository;
         this.codeGenerator = codeGenerator;
+    }
+
+    public String resolve(String shortCode) {
+        return repository.findByShortCode(shortCode)
+                .map(Url::getOriginalUrl)
+                .orElseThrow(() -> new UrlNotFoundException(shortCode));
     }
 
     public CreateUrlResponse create(String originalUrl) {

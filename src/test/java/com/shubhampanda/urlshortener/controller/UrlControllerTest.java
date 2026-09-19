@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +24,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -41,6 +46,34 @@ class UrlControllerTest {
     @BeforeEach
     void clearDatabase() {
         repository.deleteAll();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://www.example.com/some/long/path",
+            "http://example.com/path?x=1&next=%2Fother#part"
+    })
+    void redirectsToCreatedUrl(String originalUrl) throws Exception {
+        String body = mockMvc.perform(post("/api/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateUrlRequest(originalUrl))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String shortCode = objectMapper.readTree(body).get("shortCode").asText();
+
+        mockMvc.perform(get("/{shortCode}", shortCode))
+                .andExpect(status().isFound())
+                .andExpect(header().string(HttpHeaders.LOCATION, originalUrl))
+                .andExpect(content().string(""));
+    }
+
+    @Test
+    void returnsJsonNotFoundForUnknownShortCode() throws Exception {
+        mockMvc.perform(get("/aB3xY7"))
+                .andExpect(status().isNotFound())
+                .andExpect(header().doesNotExist(HttpHeaders.LOCATION))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("URL not found for short code: aB3xY7"));
     }
 
     @ParameterizedTest
